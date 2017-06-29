@@ -22,6 +22,7 @@ And lo, you can build a Slack Bot, too! With our API and this nifty repository, 
 
     ```bash
     TOKEN=xoxb-your-token-here npm start
+    GOOGLE=your-google-maps-api-key DARKSKY=your-darksky-api-key TOKEN=your-slack-api-key npm start
     ```
 
     Your bot will now attempt to log into your team, and you should be able talk to it. Try telling your new bot “hello”. It should say “Hello!” back!

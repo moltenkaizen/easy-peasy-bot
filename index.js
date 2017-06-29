@@ -7,6 +7,17 @@
  * Define a function for initiating a conversation on installation
  * With custom integrations, we don't have a way to find out who installed us, so we can't message them :(
  */
+const axios = require('axios');
+const NodeGeocoder = require('node-geocoder');
+var options = {
+  provider: 'google',
+  // Optional depending on the providers
+  httpAdapter: 'https', // Default
+  apiKey: process.env.GOOGLE, // for Mapquest, OpenCage, Google Premier
+  formatter: null         // 'gpx', 'string', ...
+};
+
+var geocoder = NodeGeocoder(options);
 
 function onInstallation(bot, installer) {
     if (installer) {
@@ -89,12 +100,47 @@ controller.hears('hello', 'direct_message', function (bot, message) {
     bot.reply(message, 'Hello!');
 });
 
+controller.hears('weather', 'direct_message,mention,direct_mention', function (bot, message) {
+  const query = message.text.match(/\s\S+/g);
+  console.log(query);
+  geocoder.geocode(query)
+  .then(function(res) {
+    const output = res[0];
+    const formattedAddress = output.formattedAddress;
+    const lat = output.latitude;
+    const long = output.longitude;
+    console.log(formattedAddress, lat, long);
+    axios.get(`https://api.darksky.net/forecast/${process.env.DARKSKY}/${lat},${long}`)
+      .then(function (response) {
+          // console.log(response.data);
+          const temperature = response.data.currently.temperature;
+          const humidity = response.data.currently.humidity * 100;
+          bot.reply(message, `Weather for ${formattedAddress}: Temperature: ${temperature}F - Humidity: ${humidity}%`);
+      })
+      .catch(function (error) {
+          console.log(error);
+          bot.reply(message, 'Hello!');
+    });
+  })
+  .catch(function(err) {
+    console.log(err);
+  });
+  // geocoder.geocode(query.toString(), function ( err, data ) {
+  //       console.log(data);
+  //       console.log(data.geometry.location.lat);
+  //       console.log(data.geometry.location.long);
+  //       const lat = data.geometry.location.lat;
+  //       const long = data.geometry.location.long;
+  //           });
+
+
+});
 
 /**
  * AN example of what could be:
  * Any un-handled direct mention gets a reaction and a pat response!
  */
-//controller.on('direct_message,mention,direct_mention', function (bot, message) {
+// controller.on('direct_message,mention,direct_mention', function (bot, message) {
 //    bot.api.reactions.add({
 //        timestamp: message.ts,
 //        channel: message.channel,
@@ -105,4 +151,4 @@ controller.hears('hello', 'direct_message', function (bot, message) {
 //        }
 //        bot.reply(message, 'I heard you loud and clear boss.');
 //    });
-//});
+// });
